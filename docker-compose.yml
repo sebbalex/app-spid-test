@@ -1,0 +1,68 @@
+version: "3.9"
+services:
+  # empty-volume:
+  #   image: busybox
+  #   command: "rm /config/crt.pem && rm /config/crt.key && rm /config/key.pem "
+  #   volumes:
+  #     - config:/config:rw
+  # keygen:
+  #   image: italia/spid-compliant-certificates:latest
+  #   command: "generator 
+  #     --key-size 3072
+  #     --common-name example
+  #     --days 365
+  #     --entity-id http://localhost:4000
+  #     --locality-name Roma
+  #     --org-id PA:IT-c_h501
+  #     --org-name example
+  #     --sector public
+  #     "
+  #   volumes:
+  #     - config:/certs:rw
+  #   depends_on:
+  #     - empty-volume
+  spid:
+    image: "italia/spid-saml-check:1.10.4"
+    ports:
+      - "8443:8443"
+  redis:
+    image: wodby/redis:3.2-2.1.5
+    environment:
+      REDIS_TIMEOUT: 300
+      REDIS_TCP_KEEPALIVE: 60
+      REDIS_MAXMEMORY: 182m
+  web:
+    build: .
+    command: "npm run dev" 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 3s
+    depends_on:
+      spid:
+        condition: service_started
+      # keygen:
+      #   condition: service_completed_successfully
+    volumes:
+      - config:/app/config:ro
+      - ./src:/app/src
+      - ./examples:/app/examples
+      - ./certs:/app/certs
+      - ./metadata:/app/metadata
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      IDP: "https://localhost:8443"
+      SP: "https://localhost:4000"
+      IDP_METADATA_URL: "https://spid:8443/metadata.xml"
+      PRIVATE_KEY_FILE: "config/key.pem"
+      CERTIFICATE_FILE: "config/crt.pem"
+      BINDING: HTTP-Redirect
+      SIG_ALG: "sha512"
+      AUTHN_CONTEXT: SpidL2
+    ports:
+      - 4000:4000
+      - 9229:9229
+volumes:
+  config:

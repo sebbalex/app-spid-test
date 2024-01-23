@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <title>{{title}}</title>
+    {{{block "pageStyles"}}}
+  </head>
+  <body>
+    <h1>{{title}}</h1>
+    <h2>IDP data</h2>
+    <h3>{{user.spidCode}}</h3>
+    <h3>{{user.fiscalNumber}}</h3>
+    <h3>{{user.email}}</h3>
+    <h2>User data</h2>
+    <h3>{{user.attributes.spidCode}}</h3>
+    <h3>{{user.attributes.name}}</h3>
+    <h3>{{user.attributes.familyName}}</h3>
+    <h3>{{user.attributes.placeOfBirth}}</h3>
+    <h3>{{user.attributes.countyOfBirth}}</h3>
+    <h3>{{user.attributes.dateOfBirth}}</h3>
+    <h3>{{user.attributes.gender}}</h3>
+    <h3>{{user.attributes.companyName}}</h3>
+    <h3>{{user.attributes.registeredOffice}}</h3>
+    <h3>{{user.attributes.ivaCode}}</h3>
+    <h3>{{user.attributes.idCard}}</h3>
+    <h3>{{user.attributes.expirationDate}}</h3>
+    <h3>{{user.attributes.mobilePhone}}</h3>
+    <h3>{{user.attributes.address}}</h3>
+    <h3>{{user.attributes.digitalAddress}}</h3>
+    <h3>{{user.attributes.companyFiscalNumber}}</h3>
+    <h3>{{user.attributes.domicileStreetAddress}}</h3>
+    <h3>{{user.attributes.domicilePostalCode}}</h3>
+    <h3>{{user.attributes.domicileMunicipality}}</h3>
+    <h3>{{user.attributes.domicileProvince}}</h3>
+    <h3>{{user.attributes.domicileNation}}</h3>
+    <h3>{{user.attributes.fiscalNumber}}</h3>
+    <h3>{{user.attributes.email}}</h3>
+    <h2>SAML Request</h2>
+    <pre><code>{{samlRequest}}</code></pre>
+    <h2>SAML Response</h2>
+    <pre><code>{{samlResponse}}</code></pre>
+    <h2>Data in callback</h2>
+    <pre><code>{{userJSON}}</code></pre>
+    
+    {{!-- {{{body}}}
+
+    {{> scripts}} --}}
+  <a href="/">Back to home</a>
+  </body>
+</html>
