@@ -5,24 +5,26 @@ import { spid } from './spid'
 import { home } from './home'
 import { user } from './user'
 import path from 'path'
-import hbs from "express-hbs"
+import hbs from 'express-hbs'
 
 async function run() {
   const app = express()
-  const {SP, IDP, SSL_KEY_FILE, SSL_CERT_FILE} = process.env;
+  const { PORT, SP, IDP, SSL_KEY_FILE, SSL_CERT_FILE } = process.env
 
   // express setup
   // parse request bodies (req.body)
   app.use(express.urlencoded({ extended: true }))
-  app.engine('hbs', hbs.express4({
-    partialsDir: __dirname + '/views/partials'
-  }));
-  app.set('view engine', 'hbs');
+  app.engine(
+    'hbs',
+    hbs.express4({
+      partialsDir: __dirname + '/views/partials',
+    }),
+  )
+  app.set('view engine', 'hbs')
   app.set('views', path.join(__dirname, 'views'))
 
-
   // route setup
-  spid(app);
+  spid(app)
   home(app, IDP)
   user(app)
 
@@ -30,7 +32,7 @@ async function run() {
     key: fs.readFileSync(SSL_KEY_FILE),
     cert: fs.readFileSync(SSL_CERT_FILE),
   }
-  https.createServer(httpsOptions, app).listen(4000, () => {
+  https.createServer(httpsOptions, app).listen(PORT, () => {
     console.log(SP)
     console.log(IDP)
   })

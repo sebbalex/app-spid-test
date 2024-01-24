@@ -11,13 +11,12 @@ import {
 const {
   IDP,
   SP,
-  IDP_METADATA_URL,
   IDP_METADATA_FILE,
   PRIVATE_KEY_FILE,
   CERTIFICATE_FILE,
   BINDING,
   SIG_ALG,
-  AUTHN_CONTEXT,
+  AUTHN_CONTEXT_INT,
   EMAIL,
 } = process.env
 
@@ -50,8 +49,8 @@ export async function spid(app: Express) {
       authnRequestBinding:
         BINDING === 'HTTP-POST' ? 'HTTP-POST' : 'HTTP-Redirect', // or HTTP-Redirect
       attributeConsumingServiceIndex: '0', // index of 'acs' array
-      signatureAlgorithm: SIG_ALG === 'sha256' ? 'sha256': 'sha512',
-      digestAlgorithm: SIG_ALG === 'sha256' ? 'sha256': 'sha512',
+      signatureAlgorithm: SIG_ALG === 'sha256' ? 'sha256' : 'sha512',
+      digestAlgorithm: SIG_ALG === 'sha256' ? 'sha256' : 'sha512',
       callbackUrl: `${SP}/login/cb`,
       logoutCallbackUrl: `${SP}/logout/cb`,
       racComparison: 'minimum',
@@ -61,7 +60,8 @@ export async function spid(app: Express) {
     spid: {
       getIDPEntityIdFromRequest: () => IDP,
       IDPRegistryMetadata: idpMetadata,
-      authnContext: 2, // spid level (1/2/3)
+      authnContext:
+        AUTHN_CONTEXT_INT === '1' ? 1 : AUTHN_CONTEXT_INT === '2' ? 2 : 3, // spid level (1/2/3)
       serviceProvider: {
         type: 'public',
         entityId: SP,
