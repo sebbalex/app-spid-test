@@ -1,11 +1,8 @@
 # SPID app test
 Bootstrap project
 
-## Intro
-1. Generate all certificates (both for spid and ssl self-signer server)
-2. ...
-
 ## Getting started
+0. `cp .env.example .env` and change it accordingly
 1. start docker compose  
 `$ docker compose up`
 2. navigate to  

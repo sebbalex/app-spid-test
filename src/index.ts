@@ -9,8 +9,7 @@ import hbs from "express-hbs"
 
 async function run() {
   const app = express()
-  const idp = 'https://localhost:8443'
-  const sp = 'https://localhost:4000'
+  const {SP, IDP, SSL_KEY_FILE, SSL_CERT_FILE} = process.env;
 
   // express setup
   // parse request bodies (req.body)
@@ -23,17 +22,17 @@ async function run() {
 
 
   // route setup
-  spid(app, sp, idp);
-  home(app, idp)
+  spid(app);
+  home(app, IDP)
   user(app)
 
   const httpsOptions = {
-    key: fs.readFileSync('./certs/ssl-key.pem'),
-    cert: fs.readFileSync('./certs/ssl-cert.pem'),
+    key: fs.readFileSync(SSL_KEY_FILE),
+    cert: fs.readFileSync(SSL_CERT_FILE),
   }
   https.createServer(httpsOptions, app).listen(4000, () => {
-    console.log(sp)
-    console.log(idp)
+    console.log(SP)
+    console.log(IDP)
   })
 }
 run().catch(console.error)

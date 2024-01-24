@@ -8,14 +8,26 @@ import {
   VerifiedCallback,
   VerifyWithoutRequest,
 } from 'passport-spid/dist/src/strategy'
+const {
+  IDP,
+  SP,
+  IDP_METADATA_URL,
+  IDP_METADATA_FILE,
+  PRIVATE_KEY_FILE,
+  CERTIFICATE_FILE,
+  BINDING,
+  SIG_ALG,
+  AUTHN_CONTEXT,
+  EMAIL,
+} = process.env
 
-export async function spid(app: Express, sp: string, idp: string) {
+export async function spid(app: Express) {
   const redis = new Redis('redis://redis')
 
-  const idpMetadata = (await fs.readFile('./metadata/idp.xml')).toString()
-  const privateKey = (await fs.readFile('./certs/key.pem')).toString()
-  const spCert = (await fs.readFile('./certs/crt.pem')).toString()
-  const email = 'asd@example.com'
+  const idpMetadata = (await fs.readFile(IDP_METADATA_FILE)).toString()
+  const privateKey = (await fs.readFile(PRIVATE_KEY_FILE)).toString()
+  const spCert = (await fs.readFile(CERTIFICATE_FILE)).toString()
+  const email = EMAIL
   // you can use a normal Map (not recommended)
   // const cache = new Map();
   const cachePrefix = 'spid_request_'
@@ -35,23 +47,24 @@ export async function spid(app: Express, sp: string, idp: string) {
   }
   const config: SpidConfig = {
     saml: {
-      authnRequestBinding: 'HTTP-POST', // or HTTP-Redirect
+      authnRequestBinding:
+        BINDING === 'HTTP-POST' ? 'HTTP-POST' : 'HTTP-Redirect', // or HTTP-Redirect
       attributeConsumingServiceIndex: '0', // index of 'acs' array
-      signatureAlgorithm: 'sha256',
-      digestAlgorithm: 'sha256',
-      callbackUrl: `${sp}/login/cb`,
-      logoutCallbackUrl: `${sp}/logout/cb`,
+      signatureAlgorithm: SIG_ALG === 'sha256' ? 'sha256': 'sha512',
+      digestAlgorithm: SIG_ALG === 'sha256' ? 'sha256': 'sha512',
+      callbackUrl: `${SP}/login/cb`,
+      logoutCallbackUrl: `${SP}/logout/cb`,
       racComparison: 'minimum',
       privateKey,
-      audience: sp,
+      audience: SP,
     },
     spid: {
-      getIDPEntityIdFromRequest: () => idp,
+      getIDPEntityIdFromRequest: () => IDP,
       IDPRegistryMetadata: idpMetadata,
       authnContext: 2, // spid level (1/2/3)
       serviceProvider: {
         type: 'public',
-        entityId: sp,
+        entityId: SP,
         certificate: spCert,
         acs: [
           {
@@ -67,7 +80,7 @@ export async function spid(app: Express, sp: string, idp: string) {
           it: {
             name: 'example',
             displayName: 'example',
-            url: sp,
+            url: SP,
           },
         },
         contactPerson: {
@@ -103,8 +116,8 @@ export async function spid(app: Express, sp: string, idp: string) {
     (req, res) => {
       const user = req.user as SamlSpidProfile
       // you can save request and response
-      const samlRequest = user.getSamlRequestXml();
-      const samlResponse = user.getSamlResponseXml();
+      const samlRequest = user.getSamlRequestXml()
+      const samlResponse = user.getSamlResponseXml()
       res.render(
         'users',
         {
@@ -113,7 +126,7 @@ export async function spid(app: Express, sp: string, idp: string) {
           user,
           userJSON: JSON.stringify(user),
           samlRequest,
-          samlResponse
+          samlResponse,
         },
         function (err, html) {
           if (err) {

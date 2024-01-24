@@ -1,26 +1,35 @@
 version: "3.9"
 services:
-  # empty-volume:
-  #   image: busybox
-  #   command: "rm /config/crt.pem && rm /config/crt.key && rm /config/key.pem "
-  #   volumes:
-  #     - config:/config:rw
-  # keygen:
-  #   image: italia/spid-compliant-certificates:latest
-  #   command: "generator 
-  #     --key-size 3072
-  #     --common-name example
-  #     --days 365
-  #     --entity-id http://localhost:4000
-  #     --locality-name Roma
-  #     --org-id PA:IT-c_h501
-  #     --org-name example
-  #     --sector public
-  #     "
-  #   volumes:
-  #     - config:/certs:rw
-  #   depends_on:
-  #     - empty-volume
+  ssl-selfsigned:
+    image: alpine
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd certs/
+        rm key.pem crt.pem
+        apk update
+        apk add openssl
+        openssl req -x509 -newkey rsa:2048 -keyout keytmp.pem -out ssl_crt.pem -days 365 -passout pass:x -subj "/C=IT/ST=Rome/L=Rome/O=PagoPA/OU=T0/CN=localhost"
+        openssl rsa -in keytmp.pem -out ssl_key.pem -passin pass:x
+    volumes:
+      - config:/certs:rw
+  keygen:
+    image: italia/spid-compliant-certificates:latest
+    command: "generator 
+      --key-size 3072
+      --common-name example
+      --days 365
+      --entity-id http://localhost:4000
+      --locality-name Roma
+      --org-id PA:IT-c_h501
+      --org-name example
+      --sector public
+      "
+    volumes:
+      - config:/certs:rw
+    depends_on:
+      - ssl-selfsigned
   spid:
     image: "italia/spid-saml-check:1.10.4"
     ports:
@@ -43,8 +52,8 @@ services:
     depends_on:
       spid:
         condition: service_started
-      # keygen:
-      #   condition: service_completed_successfully
+      keygen:
+        condition: service_completed_successfully
     volumes:
       - config:/app/config:ro
       - ./src:/app/src
@@ -53,14 +62,8 @@ services:
       - ./metadata:/app/metadata
     environment:
       NODE_TLS_REJECT_UNAUTHORIZED: 0
-      IDP: "https://localhost:8443"
-      SP: "https://localhost:4000"
-      IDP_METADATA_URL: "https://spid:8443/metadata.xml"
-      PRIVATE_KEY_FILE: "config/key.pem"
-      CERTIFICATE_FILE: "config/crt.pem"
-      BINDING: HTTP-Redirect
-      SIG_ALG: "sha512"
-      AUTHN_CONTEXT: SpidL2
+    env_file:
+      - .env
     ports:
       - 4000:4000
       - 9229:9229
